@@ -3,6 +3,14 @@
    control from AutomationDirect. Control exists through contact 
    closure only at this time. 
 */
+ 
+#include <ESP8266WiFi.h>
+#include <WiFiClient.h>
+#include <ArduinoOTA.h>
+#include <PubSubClient.h>
+#include "Secrets.h"
+
+//////
 #define DESIREDRPM_TABLE    60      //desired RPM on output wheel
 #define DESIREDRPM_MOTOR    600     //desired motor RPM (this may be superfulous) 
 #define ALARMTIME           3000    //How long alarm cond before alarm signal
@@ -12,9 +20,16 @@
 #define STARTTIME           10000   //Expected ramp up time, in MS
 #define STOPTIME            10000   //Expected ramp down time, in MS
  /////////
-#define STARTRELAYPIN       D1      //pin locations
+#define STARTRELAYPIN       1      //pin locations
 #define HALLSENSOR1PIN      5       //dual hall sensors to detect rotaion
 #define HALLSENSOR2PIN      4
+
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+char msg[50];
+
 
 /**************************************/
 /*            GLOBAL VARS              /
@@ -34,7 +49,8 @@ pinMode(STARTRELAYPIN, OUTPUT);
 pinMode(HALLSENSOR1PIN, INPUT);
 pinMode(HALLSENSOR2PIN, INPUT);
 
-
+client.setServer(mqtt_server, 1883);
+client.setCallback(callback);
 }
 
 
@@ -50,6 +66,11 @@ discSlipCheck();
 //if commanded != actual caution torque slip
 //if commanded != actual over time, report full error
 
+//MQTT Connection Check
+if (!client.connected()) {
+  reconnect();
+  }
+  client.loop();
 }
 
 
