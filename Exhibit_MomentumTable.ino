@@ -23,10 +23,12 @@
 #define STARTRELAYPIN       1      //pin locations
 #define HALLSENSOR1PIN      5       //dual hall sensors to detect rotaion
 #define HALLSENSOR2PIN      4
-
+#define SECONDS             1000    //ms in seconds 
 
 WiFiClient espClient;
 PubSubClient client(espClient);
+unsigned long now = 0 ;
+unsigned long OTAUntilMillis = 0 ;
 
 char msg[50];
 
@@ -65,7 +67,7 @@ sensorPulseCount(); // returns formatted RPM number
 discSlipCheck();
 //if commanded != actual caution torque slip
 //if commanded != actual over time, report full error
-
+now = millis();
 //MQTT Connection Check
 if (!client.connected()) {
   reconnect();
