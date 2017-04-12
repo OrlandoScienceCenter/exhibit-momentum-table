@@ -21,16 +21,12 @@
 #define STOPTIME            10000   //Expected ramp down time, in MS
  /////////
 #define STARTRELAYPIN       1      //pin locations
-#define HALLSENSOR1PIN      5       //dual hall sensors to detect rotaion
-#define HALLSENSOR2PIN      4
+#define HALLSENSORPIN      5       //hall sensor to detect rotaion
 #define SECONDS             1000    //ms in seconds 
 
 WiFiClient espClient;
 PubSubClient client(espClient);
-unsigned long now = 0 ;
-unsigned long OTAUntilMillis = 0 ;
 
-char msg[50];
 
 
 /**************************************/
@@ -39,8 +35,14 @@ char msg[50];
 
 uint16_t hallSensor1_count  = 0 ;
 uint16_t hallSensor2_count  = 0 ;
-
-
+volatile uint8_t pulseCount = 0 ;
+uint8_t rpm                 = 0 ;
+unsigned long timeOld       = 0 ;
+//
+unsigned long now = 0 ;
+unsigned long prevMillis = 0 ;
+unsigned long OTAUntilMillis = 0 ;
+char msg[50];                   
 
 /**************************************/
 /*               SETUP                 /
@@ -49,7 +51,7 @@ void setup()
 {
 pinMode(STARTRELAYPIN, OUTPUT);
 pinMode(HALLSENSOR1PIN, INPUT);
-pinMode(HALLSENSOR2PIN, INPUT);
+attachInterrupt(digitalPinToInterrupt(HALLSENSORPIN), sensorPulseCount, RISING);
 
 client.setServer(mqtt_server, 1883);
 client.setCallback(callback);
@@ -63,7 +65,7 @@ void loop()
 {
 //wait for mqtt commands
 //send out mqtt status
-sensorPulseCount(); // returns formatted RPM number
+calculateRPM();
 discSlipCheck();
 //if commanded != actual caution torque slip
 //if commanded != actual over time, report full error
@@ -79,9 +81,21 @@ if (!client.connected()) {
 /**************************************/
 /*             FUNCTIONS               /
 /**************************************/
-void sensorPulseCount(){}
-//current rotation value xx
-// report back RPM
+void sensorPulseCount(){
+pulseCount++;
+// expected two pulse counts per rotation, two sensors 
+}
+
+void calculateRPM(){
+if (millis() - prevMillis == 1000){
+    detachInterrupt();              //disable interrupts while running calculate
+    rpm = pulseCount * 60;          //converting frequency to RPM
+    pulseCount = 0;                 //reset pulse counter
+    prevMillis = millis();          //update prevMillis
+    attachInterrupt(digitalPinToInterrupt(HALLSENSORPIN), sensorPulseCount, RISING);
+    //reattach interrupt
+    }
+  }
 
 void motionControlStart(){}
 //enable start relay
