@@ -11,8 +11,8 @@
 #include "Secrets.h"
 
 //////
-//#define DESIREDRPM_TABLE    60      //desired RPM on output wheel
-#define DESIREDRPM_MOTOR    600     //desired motor RPM (this may be superfulous) 
+#define DESIREDRPM_TABLE    60      //desired RPM on output wheel
+//#define DESIREDRPM_MOTOR    600     //desired motor RPM (this may be superfulous) 
 #define DISCSLIPCOUNT       250     //How long alarm cond before alarm signal
 #define LOCKEDDISCRPM       10      //RPM to consider as "disc stopped"
 #define ROTATIONVARIANCE    50      //Variance in RPM before alarm condition 
@@ -89,7 +89,7 @@ pulseCount++;
 
 void calculateRPM(){
 if (millis() - prevMillis == 1000){
-    detachInterrupt();              //disable interrupts while running calculate
+    detachInterrupt(HALLSENSORPIN);              //disable interrupts while running calculate
     rpm = pulseCount * 60;          //converting frequency to RPM
     pulseCount = 0;                 //reset pulse counter
     prevMillis = millis();          //update prevMillis
@@ -151,6 +151,8 @@ void lockedRotorCheck(){
 
 void allStop(){
     digitalWrite(STARTRELAYPIN, LOW);
+    delay(5000);
     // wait here until MQTT command to restart or system power cycle
     //motionControlStart();
-    
+    allStop();
+    }
