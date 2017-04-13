@@ -34,17 +34,17 @@ PubSubClient client(espClient);
 /*            GLOBAL VARS              /
 /**************************************/
 
-uint16_t hallSensor1_count  = 0;
-uint16_t hallSensor2_count  = 0;
-volatile uint8_t pulseCount = 0;
-uint8_t rpm                 = 0;
-unsigned long timeOld       = 0;
+uint16_t hallSensor1_count  = 0 ;
+uint16_t hallSensor2_count  = 0 ;
+volatile uint8_t pulseCount = 0 ;
+uint8_t rpm                 = 0 ;
+unsigned long timeOld       = 0 ;
 //
-unsigned long now           = 0;
-unsigned long prevMillis    = 0;
-unsigned long OTAUntilMillis = 0;
-uint8_t discSlipPrecond    = 0;
-uint8_t restartCount        = 0;
+unsigned long now           = 0 ;
+unsigned long prevMillis    = 0 ;
+unsigned long OTAUntilMillis = 0 ;
+uint8_t discSlipPrecond     = 0 ;
+uint8_t restartCount        = 0 ;
 char msg[50];                   
 
 /**************************************/
