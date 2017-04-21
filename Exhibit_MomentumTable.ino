@@ -21,8 +21,8 @@
 #define STARTTIME           10000   //Expected ramp up time, in MS
 #define STOPTIME            10000   //Expected ramp down time, in MS
  /////////
-#define STARTRELAYPIN       1      //pin locations
-#define HALLSENSORPIN       5       //hall sensor to detect rotaion
+#define STARTRELAYPIN       5      //pin locations
+#define HALLSENSORPIN       4       //hall sensor to detect rotaion
 #define SECONDS             1000    //ms in seconds 
 
 WiFiClient espClient;
@@ -53,10 +53,16 @@ char msg[50];
 /**************************************/
 void setup(){
 pinMode(STARTRELAYPIN, OUTPUT);
-pinMode(HALLSENSORPIN, INPUT);
-attachInterrupt(digitalPinToInterrupt(HALLSENSORPIN), sensorPulseCount, RISING);
+pinMode(HALLSENSORPIN, INPUT_PULLUP);
+digitalWrite(STARTRELAYPIN, LOW);
+attachInterrupt(digitalPinToInterrupt(HALLSENSORPIN), sensorPulseCount, FALLING);
 client.setServer(mqtt_server, 1883);
 client.setCallback(callback);
+Serial.begin(115200);
+/////////////////////////////
+delay(5000);
+motionControlStart(); // remove when MQTT is active. testing only 
+/////////////////////////////
 }
 
 
@@ -98,22 +104,26 @@ if (millis() - prevMillis == 1000){
   }
 
 void motionControlStart(){
+    Serial.println("Motor Control Start");
     if (restartCount < NUMBEROFRESTARTS){
         digitalWrite(STARTRELAYPIN, HIGH); // enable start relay if not above fail counter
         delay(2000); // wait for 2 second for a rotation 
-        if (pulseCount > 1){               // if no rotation detected in interrupt
+        if (pulseCount < 1){               // if no rotation detected in interrupt
             digitalWrite(STARTRELAYPIN, LOW); // turn off motor becuase of no rotation
             restartCount++;
-            delay (2000); // delay 2 seconds before attempting restart
+            delay (3000); // delay 3 seconds before attempting restart
             pulseCount = 0; // reset pulse count 
             motionControlStart();
             }
         else {
+        Serial.println("motion started, system running");
         restartCount = 0; // set restart counter to 0, since we're started
         allStopVar = 0; // Set allstop condition to off 
         }
     }    
     if (restartCount >= NUMBEROFRESTARTS) {
+        digitalWrite(STARTRELAYPIN, LOW);
+        Serial.println("disc not started");
         client.publish(TOPIC_T, "CritErr: Disc Start / Restart Failed --- SYSTEM HALTED");
         //MQTT "Disc Start / Restart Failed ---- SYSTEM HALTED"
         allStop();   
@@ -153,6 +163,7 @@ void lockedRotorCheck(){
 
 void allStop(){
     digitalWrite(STARTRELAYPIN, LOW);
+    Serial.println("System in All-Stop");
     delay(5000);
     client.publish(TOPIC_T, "CritErr: System halted. All stop active. Restart Required");
     allStopVar = 1;
