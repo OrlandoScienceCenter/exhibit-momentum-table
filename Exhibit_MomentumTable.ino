@@ -39,6 +39,7 @@ uint16_t hallSensor2_count  = 0 ;
 volatile uint8_t pulseCount = 0 ;
 uint8_t rpm                 = 0 ;
 unsigned long timeOld       = 0 ;
+uint8_t allStopVar          = 1 ;
 //
 unsigned long now           = 0 ;
 unsigned long prevMillis    = 0 ;
@@ -63,19 +64,17 @@ client.setCallback(callback);
 /*                LOOP                 /
 /**************************************/
 void loop(){
-//wait for mqtt commands
-//send out mqtt status
-calculateRPM();
-discSlipCheck();
-lockedRotorCheck();
-//if commanded != actual caution torque slip
-//if commanded != actual over time, report full error
-now = millis();
-//MQTT Connection Check
-if (!client.connected()) {
-  reconnect();
-  }
-  client.loop();
+if  (allStopVar == 0){
+    calculateRPM();
+    discSlipCheck();
+    lockedRotorCheck();
+}
+    now = millis();
+    //MQTT Connection Check
+    if (!client.connected()) {
+    reconnect();
+    }
+    client.loop();
 }
 
 
@@ -111,20 +110,25 @@ void motionControlStart(){
             }
         else {
         restartCount = 0; // set restart counter to 0, since we're started
+        allStopVar = 0; // Set allstop condition to off 
         }
     }    
     if (restartCount >= NUMBEROFRESTARTS) {
+        client.publish(TOPIC_T, "CritErr: Disc Start / Restart Failed --- SYSTEM HALTED");
         //MQTT "Disc Start / Restart Failed ---- SYSTEM HALTED"
         allStop();   
     }
 }
 
-void motiionControlStop(){}
-//disable start relay
-//check for stopped rotation within x seconds
-//rotation state no
-//current rotation value 00
-//if rotation doesn't stop, report error
+void motiionControlStop(){
+    digitalWrite(STARTRELAYPIN, LOW);//disable start relay
+    delay (10000); // wait 10 seconds for spindown
+    calculateRPM();
+    if (rpm > 0){
+        client.publish(TOPIC_T, "Error: Disc not stopped even though commanded, System halting");
+        allStop();
+    }
+}    
 
 void discSlipCheck(){
     if (rpm < (DESIREDRPM_TABLE - ROTATIONVARIANCE)){
@@ -135,24 +139,27 @@ void discSlipCheck(){
         discSlipPrecond--;
         }
     if (discSlipPrecond > DISCSLIPCOUNT){
-    //SEND MQTT MESSAGE HERE
-    // "Caution! - Disc Slip Detected"
-    //
+    client.publish(TOPIC_T, "Error: - Continuious Disc Slip Detected"); 
     }
 }
+
 
 void lockedRotorCheck(){
     if (rpm <= LOCKEDDISCRPM){
         digitalWrite(STARTRELAYPIN, LOW); // immediately shut down if RPM lowByte
-        }                                 // disc is stuck or stopped 
-        //SEND MQTT MESSAGE HERE "WARNING! Disc has stopped rotation"
-              
+        }                            
+        client.publish(TOPIC_T, "CritErr: Disc rotation is locked, attempting restart");              
 }
 
 void allStop(){
     digitalWrite(STARTRELAYPIN, LOW);
     delay(5000);
-    // wait here until MQTT command to restart or system power cycle
-    //motionControlStart();
-    allStop();
-    }
+    client.publish(TOPIC_T, "CritErr: System halted. All stop active. Restart Required");
+    allStopVar = 1;
+    loop();
+    }    
+void exhibitStatusMsg(){
+    char gs_msg [50];
+    snprintf (gs_msg, 38, "Disc RPM %i", now / rpm);
+    client.publish(TOPIC_T, gs_msg);
+        }

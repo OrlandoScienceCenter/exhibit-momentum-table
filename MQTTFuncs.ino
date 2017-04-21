@@ -19,15 +19,15 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
   // powerOff
   if (payloadStr.equals(F("powerOff"))) {
-
+    motiionControlStop();
   // powerOn
   } else if (payloadStr.equals(F("powerOn"))) {
-  
+  motionControlStart();
   // getStatus
   } else if (payloadStr.equals(F("getStatus"))) {
       // snprintf (msg, 20, "PowerState: %i", curState);
       // client.publish(TOPIC_T, msg);
-    
+    exhibitStatusMsg();
     snprintf (msg, 30, "Up for: %i seconds", now / SECONDS);
     client.publish(TOPIC_T, msg);
     
@@ -45,6 +45,10 @@ void callback(char* topic, byte* payload, unsigned int length) {
   
   // powerReset
   } else if (payloadStr.equals(F("powerReset"))) {
+    motiionControlStop();
+    delay(10000);
+    motionControlStart();
+    loop();
   
   // resetESP
   } else if (payloadStr.equals(F("resetESP"))) {

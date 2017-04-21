@@ -1,5 +1,5 @@
-#define TOPIC_T "Topic/Goes/Here/DeviceName"
-#define OTA_HOSTNAME "Name_for_OTA_and_Such"
+#define TOPIC_T "OSC/F2/KineticZone/MomentumTable"
+#define OTA_HOSTNAME "MomentumTable"
 
 // Number of seconds on power applied before device actually turns on. For power outages, restarts, etc...
 #define STARTUP_DELAY_SECONDS 30
