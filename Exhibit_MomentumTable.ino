@@ -8,6 +8,7 @@
 #include <WiFiClient.h>
 #include <ArduinoOTA.h>
 #include <PubSubClient.h>
+#include <ESP8266mDNS.h> // added this to fix a weird arduino ide bug
 #include "Secrets.h"
 
 //////
@@ -70,6 +71,7 @@ motionControlStart(); // remove when MQTT is active. testing only
 /*                LOOP                 /
 /**************************************/
 void loop(){
+	Serial.println("loop entered");
 if  (allStopVar == 0){
     calculateRPM();
     discSlipCheck();
@@ -89,18 +91,19 @@ if  (allStopVar == 0){
 /**************************************/
 void sensorPulseCount(){
 pulseCount++;
+Serial.println(pulseCount);
 // expected two pulse counts per rotation, two sensors 
 }
 
 void calculateRPM(){
 if (millis() - prevMillis == 1000){
-    detachInterrupt(HALLSENSORPIN);              //disable interrupts while running calculate
+  //  detachInterrupt(HALLSENSORPIN);              //disable interrupts while running calculate
     rpm = pulseCount * 60;          //converting frequency to RPM
     pulseCount = 0;                 //reset pulse counter
     prevMillis = millis();          //update prevMillis
     Serial.print("RPM: ");
     Serial.println(rpm);
-    attachInterrupt(digitalPinToInterrupt(HALLSENSORPIN), sensorPulseCount, RISING);
+ //   attachInterrupt(digitalPinToInterrupt(HALLSENSORPIN), sensorPulseCount, RISING);
     //reattach interrupt
     }
   }
@@ -109,8 +112,8 @@ void motionControlStart(){
     Serial.println("Motor Control Start");
     if (restartCount < NUMBEROFRESTARTS){
         digitalWrite(STARTRELAYPIN, HIGH); // enable start relay if not above fail counter
-        delay(2000); // wait for 2 second for a rotation 
-        if (pulseCount < 1){               // if no rotation detected in interrupt
+        delay(5000); // wait for 2 second for a rotation 
+        if (pulseCount == 0){               // if no rotation detected in interrupt
             digitalWrite(STARTRELAYPIN, LOW); // turn off motor becuase of no rotation
             restartCount++;
             delay (3000); // delay 3 seconds before attempting restart
@@ -121,6 +124,8 @@ void motionControlStart(){
         Serial.println("motion started, system running");
         restartCount = 0; // set restart counter to 0, since we're started
         allStopVar = 0; // Set allstop condition to off 
+		Serial.print("AllStopVar ");
+		Serial.println(allStopVar);
         }
     }    
     if (restartCount >= NUMBEROFRESTARTS) {
@@ -136,6 +141,7 @@ void motionControlStop(){
     digitalWrite(STARTRELAYPIN, LOW);//disable start relay
     delay (10000); // wait 10 seconds for spindown
     calculateRPM();
+	Serial.println("MotionControlStop");
     if (rpm > 0){
         client.publish(TOPIC_T, "Error: Disc not stopped even though commanded, System halting");
         allStop();

@@ -19,10 +19,10 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
   // powerOff
   if (payloadStr.equals(F("powerOff"))) {
-    motionControlStop();
+    //motionControlStop();
   // powerOn
   } else if (payloadStr.equals(F("powerOn"))) {
-  motionControlStart();
+  //motionControlStart();
   // getStatus
   } else if (payloadStr.equals(F("getStatus"))) {
       // snprintf (msg, 20, "PowerState: %i", curState);
@@ -45,9 +45,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
   
   // powerReset
   } else if (payloadStr.equals(F("powerReset"))) {
-    motionControlStop();
-    delay(10000);
-    motionControlStart();
+    //motionControlStop();
+    //delay(10000);
+    //motionControlStart();
     loop();
   
   // resetESP
