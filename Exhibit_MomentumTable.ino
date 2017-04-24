@@ -98,6 +98,8 @@ if (millis() - prevMillis == 1000){
     rpm = pulseCount * 60;          //converting frequency to RPM
     pulseCount = 0;                 //reset pulse counter
     prevMillis = millis();          //update prevMillis
+    Serial.print("RPM: ");
+    Serial.println(rpm);
     attachInterrupt(digitalPinToInterrupt(HALLSENSORPIN), sensorPulseCount, RISING);
     //reattach interrupt
     }
@@ -115,7 +117,7 @@ void motionControlStart(){
             pulseCount = 0; // reset pulse count 
             motionControlStart();
             }
-        else {
+        if (pulseCount > 1){
         Serial.println("motion started, system running");
         restartCount = 0; // set restart counter to 0, since we're started
         allStopVar = 0; // Set allstop condition to off 
@@ -130,7 +132,7 @@ void motionControlStart(){
     }
 }
 
-void motiionControlStop(){
+void motionControlStop(){
     digitalWrite(STARTRELAYPIN, LOW);//disable start relay
     delay (10000); // wait 10 seconds for spindown
     calculateRPM();

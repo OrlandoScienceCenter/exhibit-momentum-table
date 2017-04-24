@@ -19,7 +19,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
   // powerOff
   if (payloadStr.equals(F("powerOff"))) {
-    motiionControlStop();
+    motionControlStop();
   // powerOn
   } else if (payloadStr.equals(F("powerOn"))) {
   motionControlStart();
@@ -45,7 +45,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   
   // powerReset
   } else if (payloadStr.equals(F("powerReset"))) {
-    motiionControlStop();
+    motionControlStop();
     delay(10000);
     motionControlStart();
     loop();
