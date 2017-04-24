@@ -18,8 +18,8 @@
 #define LOCKEDDISCRPM       30     //RPM to consider as "disc stopped"
 #define ROTATIONVARIANCE    2      //Variance in RPM before alarm condition 
 
-#define LOCKEDDISCRPM       10      //RPM to consider as "disc stopped"
-#define ROTATIONVARIANCE    12	      //Variance in RPM before alarm condition 
+#define LOCKEDDISCRPM       30      //RPM to consider as "disc stopped"
+#define ROTATIONVARIANCE    6	      //Variance in RPM before alarm condition 
 //#define TRANSMISSIONRATIO   10      //Tranmission drive ratio n:1
 #define NUMBEROFRESTARTS    3      //#of restarts attempted after stopped state
 #define STARTTIME           10000   //Expected ramp up time, in MS
@@ -110,9 +110,9 @@ if (millis() - prevMillis >= 5000){
 
 void motionControlStart(){
     if (restartCount < NUMBEROFRESTARTS){
-        digitalWrite(STARTRELAYPIN, HIGH); // enable start relay if not above fail counter
+	    Serial.println("Motor Control Start");
+		digitalWrite(STARTRELAYPIN, HIGH); // enable start relay if not above fail counter
         delay(4000); // wait for 4 second for a rotation 
-		    Serial.println("Motor Control Start");
 
         if (pulseCount == 0){               // if no rotation detected in interrupt
             digitalWrite(STARTRELAYPIN, LOW); // turn off motor becuase of no rotation
@@ -128,6 +128,7 @@ void motionControlStart(){
 						// to not trip locked rotor functiion
         restartCount = 0; // set restart counter to 0, since we're started
         allStopVar = 0; // Set allstop condition to off 
+		loop();
         }
     }    
     if (restartCount >= NUMBEROFRESTARTS) {
@@ -179,11 +180,11 @@ void lockedRotorCheck(){
 void allStop(){
     digitalWrite(STARTRELAYPIN, LOW);
     Serial.println("System in All-Stop");
-    delay(5000);
+    delay(10000);
     client.publish(TOPIC_T, "CritErr: System halted. All stop active. Restart Required");
     allStopVar = 1;
-    loop();
     }    
+	
 void exhibitStatusMsg(){
     char gs_msg [50];
     snprintf (gs_msg, 38, "Disc RPM %i", now / rpm);
