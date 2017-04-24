@@ -61,7 +61,6 @@ attachInterrupt(digitalPinToInterrupt(HALLSENSORPIN), sensorPulseCount, FALLING)
 client.setServer(mqtt_server, 1883);
 client.setCallback(callback);
 Serial.begin(115200);
-Serial.println("");
 /////////////////////////////
 delay(5000);
 motionControlStart(); // remove when MQTT is active. testing only 
