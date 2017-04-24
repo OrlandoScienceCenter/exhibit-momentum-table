@@ -15,7 +15,7 @@
 #define DESIREDRPM_TABLE    60      //desired RPM on output wheel
 //#define DESIREDRPM_MOTOR    600     //desired motor RPM (this may be superfulous) 
 #define DISCSLIPCOUNT       250     //How long alarm cond before alarm signal
-#define LOCKEDDISCRPM       20     //RPM to consider as "disc stopped"
+#define LOCKEDDISCRPM       30     //RPM to consider as "disc stopped"
 #define ROTATIONVARIANCE    2      //Variance in RPM before alarm condition 
 //#define TRANSMISSIONRATIO   10      //Tranmission drive ratio n:1
 #define NUMBEROFRESTARTS    3     //#of restarts attempted after stopped state
@@ -61,6 +61,7 @@ attachInterrupt(digitalPinToInterrupt(HALLSENSORPIN), sensorPulseCount, FALLING)
 client.setServer(mqtt_server, 1883);
 client.setCallback(callback);
 Serial.begin(115200);
+Serial.println("");
 /////////////////////////////
 delay(5000);
 motionControlStart(); // remove when MQTT is active. testing only 
@@ -115,6 +116,7 @@ void motionControlStart(){
         delay(3000); // wait for 3 second for a rotation 
         if (pulseCount == 0){               // if no rotation detected in interrupt
             digitalWrite(STARTRELAYPIN, LOW); // turn off motor becuase of no rotation
+			Serial.println("No rotation detected -- attempting restart");
             restartCount++;
             delay (10000); // delay 10 seconds before attempting restart
             pulseCount = 0; // reset pulse count 
@@ -122,10 +124,10 @@ void motionControlStart(){
             }
         if (pulseCount > 1){
         Serial.println("motion started, system running");
+		delay(3000); 	// wait 3 seconds for disc to come up to fast enough speed
+						// to not trip locked rotor function
         restartCount = 0; // set restart counter to 0, since we're started
         allStopVar = 0; // Set allstop condition to off 
-		Serial.print("AllStopVar ");
-		Serial.println(allStopVar);
         }
     }    
     if (restartCount >= NUMBEROFRESTARTS) {
