@@ -15,10 +15,10 @@
 #define DESIREDRPM_TABLE    60      //desired RPM on output wheel
 //#define DESIREDRPM_MOTOR    600     //desired motor RPM (this may be superfulous) 
 #define DISCSLIPCOUNT       250     //How long alarm cond before alarm signal
-#define LOCKEDDISCRPM       10      //RPM to consider as "disc stopped"
-#define ROTATIONVARIANCE    50      //Variance in RPM before alarm condition 
+#define LOCKEDDISCRPM       20     //RPM to consider as "disc stopped"
+#define ROTATIONVARIANCE    2      //Variance in RPM before alarm condition 
 //#define TRANSMISSIONRATIO   10      //Tranmission drive ratio n:1
-#define NUMBEROFRESTARTS    5      //#of restarts attempted after stopped state
+#define NUMBEROFRESTARTS    3     //#of restarts attempted after stopped state
 #define STARTTIME           10000   //Expected ramp up time, in MS
 #define STOPTIME            10000   //Expected ramp down time, in MS
  /////////
@@ -48,6 +48,7 @@ unsigned long OTAUntilMillis = 0 ;
 uint8_t discSlipPrecond     = 0 ;
 uint8_t restartCount        = 0 ;
 char msg[50];                   
+uint8_t reconnectAttempt 	= 0;
 
 /**************************************/
 /*               SETUP                 /
@@ -71,18 +72,18 @@ motionControlStart(); // remove when MQTT is active. testing only
 /*                LOOP                 /
 /**************************************/
 void loop(){
-	Serial.println("loop entered");
+	delay(3);
 if  (allStopVar == 0){
     calculateRPM();
     discSlipCheck();
-   // lockedRotorCheck();
+    lockedRotorCheck();
 }
     now = millis();
     //MQTT Connection Check
-    if (!client.connected()) {
-    reconnect();
-    }
-    client.loop();
+	//if (!client.connected()) {
+	//	reconnect();
+    //}
+    //client.loop();
 }
 
 
@@ -91,37 +92,36 @@ if  (allStopVar == 0){
 /**************************************/
 void sensorPulseCount(){
 pulseCount++;
-Serial.println(pulseCount);
 // expected two pulse counts per rotation, two sensors 
 }
 
 void calculateRPM(){
-if (millis() - prevMillis == 1000){
+if (millis() - prevMillis >= 5000){
+	Serial.println("CalculatingRPM");
     detachInterrupt(HALLSENSORPIN);              //disable interrupts while running calculate
-    rpm = pulseCount * 60;          //converting frequency to RPM
+    rpm = pulseCount * 6;          //converting frequency to RPM(two magnets on disc x 5 sec)
     pulseCount = 0;                 //reset pulse counter
     prevMillis = millis();          //update prevMillis
     Serial.print("RPM: ");
     Serial.println(rpm);
-    attachInterrupt(digitalPinToInterrupt(HALLSENSORPIN), sensorPulseCount, RISING);
-		}
+    attachInterrupt(digitalPinToInterrupt(HALLSENSORPIN), sensorPulseCount, FALLING);
+    }
   }
 
 void motionControlStart(){
-    Serial.println("Motor Control Start");
     if (restartCount < NUMBEROFRESTARTS){
-        digitalWrite(STARTRELAYPIN, HIGH); // enable start relay if not above fail counter
-        delay(5000); // wait for 2 second for a rotation 
+	    Serial.println("Motor Control Start");
+		digitalWrite(STARTRELAYPIN, HIGH); // enable start relay if not above fail counter
+        delay(3000); // wait for 3 second for a rotation 
         if (pulseCount == 0){               // if no rotation detected in interrupt
             digitalWrite(STARTRELAYPIN, LOW); // turn off motor becuase of no rotation
             restartCount++;
-            delay (3000); // delay 3 seconds before attempting restart
+            delay (10000); // delay 10 seconds before attempting restart
             pulseCount = 0; // reset pulse count 
             motionControlStart();
             }
         if (pulseCount > 1){
         Serial.println("motion started, system running");
-		pulseCount = 0;
         restartCount = 0; // set restart counter to 0, since we're started
         allStopVar = 0; // Set allstop condition to off 
 		Serial.print("AllStopVar ");
@@ -149,11 +149,13 @@ void motionControlStop(){
 }    
 
 void discSlipCheck(){
-    if (rpm < (DESIREDRPM_TABLE - ROTATIONVARIANCE)){
+    if (rpm < (DESIREDRPM_TABLE - ROTATIONVARIANCE && allStopVar == 0)){
         discSlipPrecond++;
+		Serial.println("Disc is slipping from nominal RPM");
+		Serial.println(discSlipPrecond);
         }
     else
-        if (discSlipPrecond > 0){
+        if (rpm >= (DESIREDRPM_TABLE - ROTATIONVARIANCE && allStopVar == 0)){
         discSlipPrecond--;
         }
     if (discSlipPrecond > DISCSLIPCOUNT){
@@ -165,17 +167,20 @@ void discSlipCheck(){
 void lockedRotorCheck(){
     if (rpm <= LOCKEDDISCRPM){
         digitalWrite(STARTRELAYPIN, LOW); // immediately shut down if RPM lowByte
-        }                            
-        client.publish(TOPIC_T, "CritErr: Disc rotation is locked, attempting restart");              
+        client.publish(TOPIC_T, "CritErr: Disc rotation is locked, attempting restart"); 
+		Serial.println("Disc motion has been stopped. Attempting Restart");
+		delay(10000);
+		motionControlStart();
+		}                            
+		
 }
 
 void allStop(){
     digitalWrite(STARTRELAYPIN, LOW);
     Serial.println("System in All-Stop");
-    delay(5000);
     client.publish(TOPIC_T, "CritErr: System halted. All stop active. Restart Required");
     allStopVar = 1;
-    loop();
+    delay(10000);
     }    
 void exhibitStatusMsg(){
     char gs_msg [50];
