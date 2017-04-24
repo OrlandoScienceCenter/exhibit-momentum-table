@@ -75,7 +75,7 @@ void loop(){
 if  (allStopVar == 0){
     calculateRPM();
     discSlipCheck();
-    lockedRotorCheck();
+   // lockedRotorCheck();
 }
     now = millis();
     //MQTT Connection Check
@@ -97,15 +97,14 @@ Serial.println(pulseCount);
 
 void calculateRPM(){
 if (millis() - prevMillis == 1000){
-  //  detachInterrupt(HALLSENSORPIN);              //disable interrupts while running calculate
+    detachInterrupt(HALLSENSORPIN);              //disable interrupts while running calculate
     rpm = pulseCount * 60;          //converting frequency to RPM
     pulseCount = 0;                 //reset pulse counter
     prevMillis = millis();          //update prevMillis
     Serial.print("RPM: ");
     Serial.println(rpm);
- //   attachInterrupt(digitalPinToInterrupt(HALLSENSORPIN), sensorPulseCount, RISING);
-    //reattach interrupt
-    }
+    attachInterrupt(digitalPinToInterrupt(HALLSENSORPIN), sensorPulseCount, RISING);
+		}
   }
 
 void motionControlStart(){
@@ -122,6 +121,7 @@ void motionControlStart(){
             }
         if (pulseCount > 1){
         Serial.println("motion started, system running");
+		pulseCount = 0;
         restartCount = 0; // set restart counter to 0, since we're started
         allStopVar = 0; // Set allstop condition to off 
 		Serial.print("AllStopVar ");
