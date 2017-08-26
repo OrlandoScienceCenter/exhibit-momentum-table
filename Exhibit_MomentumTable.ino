@@ -65,7 +65,7 @@ client.setCallback(callback);
 Serial.begin(115200);
 /////////////////////////////
 delay(5000);
-motionControlStart(); // remove when MQTT is active. testing only 
+//motionControlStart(); // remove when MQTT is active. testing only 
 /////////////////////////////
 }
 
@@ -74,17 +74,17 @@ motionControlStart(); // remove when MQTT is active. testing only
 /*                LOOP                 /
 /**************************************/
 void loop(){
-if  (allStopVar == 0){
-    calculateRPM();
-    discSlipCheck();
-    lockedRotorCheck();
-}
-    //now = millis();
+    if  (allStopVar == 0){
+       calculateRPM();
+       discSlipCheck();
+       lockedRotorCheck();
+     }
+    now = millis();
     //MQTT Connection Check
-    //if (!client.connected()) {
-    //reconnect();
-   // }
-    //client.loop();
+    if (!client.connected()) {
+    reconnect();
+    }
+    client.loop();
 }
 
 
@@ -180,7 +180,7 @@ void lockedRotorCheck(){
 void allStop(){
     digitalWrite(STARTRELAYPIN, LOW);
     Serial.println("System in All-Stop");
-    delay(10000);
+    //delay(10000);
     client.publish(TOPIC_T, "CritErr: System halted. All stop active. Restart Required");
     allStopVar = 1;
     }    

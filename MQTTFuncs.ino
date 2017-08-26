@@ -19,10 +19,10 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
   // powerOff
   if (payloadStr.equals(F("powerOff"))) {
-    //motionControlStop();
+    motionControlStop();
   // powerOn
   } else if (payloadStr.equals(F("powerOn"))) {
-  //motionControlStart();
+    motionControlStart();
   // getStatus
   } else if (payloadStr.equals(F("getStatus"))) {
       // snprintf (msg, 20, "PowerState: %i", curState);
@@ -45,9 +45,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
   
   // powerReset
   } else if (payloadStr.equals(F("powerReset"))) {
-    //motionControlStop();
-    //delay(10000);
-    //motionControlStart();
+    motionControlStop();
+    delay(10000);
+    motionControlStart();
     loop();
   
   // resetESP
@@ -56,15 +56,15 @@ void callback(char* topic, byte* payload, unsigned int length) {
     delay(500);
     ESP.restart();
   } else if (payloadStr.equals(F("custom_action1"))) {         
-    client.publish(TOPIC_T, "Custom action 1 run");
+    client.publish(TOPIC_T, "Custom action 1 unimplemented!");
   } else if (payloadStr.equals(F("custom_action2"))) {
-    client.publish(TOPIC_T, "Custom action 2 run");
+    client.publish(TOPIC_T, "Custom action 2 unimplemented!");
   } else if (payloadStr.equals(F("custom_action3"))) {
-    client.publish(TOPIC_T, "Custom action 3 run");
+    client.publish(TOPIC_T, "Custom action 3 unimplemented!");
   } else if (payloadStr.equals(F("custom_action4"))) {
-    client.publish(TOPIC_T, "Custom action 4 run");
+    client.publish(TOPIC_T, "Custom action 4 unimplemented!");
   } else if (payloadStr.equals(F("custom_action5"))) {
-    client.publish(TOPIC_T, "Custom action 5 run");
+    client.publish(TOPIC_T, "Custom action 5 unimplemented!");
   }
 }
 
@@ -88,4 +88,35 @@ void reconnect() {
       delay(5000);
     }
   }
+}
+void wifiSetupOTA(){
+  ArduinoOTA.setHostname(OTA_HOSTNAME);
+ 
+  ArduinoOTA.onStart([]() {});
+  ArduinoOTA.onEnd([]() {});
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+  });
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.print(F("Err"));
+  });
+  ArduinoOTA.begin();
+}
+
+void wifiSetup(){
+  WiFi.mode(WIFI_STA);
+  Serial.println();
+  Serial.print(F("Connecting to "));
+  Serial.println(ssid);
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(F("."));
+  }
+
+  Serial.println();
+  Serial.println(F("WiFi connected"));
+  Serial.println(F("IP address: "));
+  Serial.println(WiFi.localIP());
 }
