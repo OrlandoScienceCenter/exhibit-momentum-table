@@ -19,10 +19,10 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
   // powerOff
   if (payloadStr.equals(F("powerOff"))) {
-    //motionControlStop();
+    motionControlStop();
   // powerOn
   } else if (payloadStr.equals(F("powerOn"))) {
-  //motionControlStart();
+    motionControlStart();
   // getStatus
   } else if (payloadStr.equals(F("getStatus"))) {
       // snprintf (msg, 20, "PowerState: %i", curState);
@@ -45,9 +45,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
   
   // powerReset
   } else if (payloadStr.equals(F("powerReset"))) {
-    //motionControlStop();
-    //delay(10000);
-    //motionControlStart();
+    motionControlStop();
+    delay(10000);
+    motionControlStart();
     loop();
   
   // resetESP
@@ -56,15 +56,15 @@ void callback(char* topic, byte* payload, unsigned int length) {
     delay(500);
     ESP.restart();
   } else if (payloadStr.equals(F("custom_action1"))) {         
-    client.publish(TOPIC_T, "Custom action 1 run");
+    client.publish(TOPIC_T, "Custom action 1 unimplemented!");
   } else if (payloadStr.equals(F("custom_action2"))) {
-    client.publish(TOPIC_T, "Custom action 2 run");
+    client.publish(TOPIC_T, "Custom action 2 unimplemented!");
   } else if (payloadStr.equals(F("custom_action3"))) {
-    client.publish(TOPIC_T, "Custom action 3 run");
+    client.publish(TOPIC_T, "Custom action 3 unimplemented!");
   } else if (payloadStr.equals(F("custom_action4"))) {
-    client.publish(TOPIC_T, "Custom action 4 run");
+    client.publish(TOPIC_T, "Custom action 4 unimplemented!");
   } else if (payloadStr.equals(F("custom_action5"))) {
-    client.publish(TOPIC_T, "Custom action 5 run");
+    client.publish(TOPIC_T, "Custom action 5 unimplemented!");
   }
 }
 
