@@ -48,6 +48,7 @@ uint8_t allStopVar          = 1 ;
 unsigned long now           = 0 ;
 unsigned long prevMillis    = 0 ;
 unsigned long OTAUntilMillis = 0 ;
+bool OTARdyFlag = 0;
 uint8_t discSlipPrecond     = 0 ;
 uint8_t restartCount        = 0 ;
 char msg[50];                   
@@ -60,9 +61,10 @@ pinMode(STARTRELAYPIN, OUTPUT);
 pinMode(HALLSENSORPIN, INPUT_PULLUP);
 digitalWrite(STARTRELAYPIN, LOW);
 attachInterrupt(digitalPinToInterrupt(HALLSENSORPIN), sensorPulseCount, FALLING);
+Serial.begin(115200);
+wifiSetup();
 client.setServer(mqtt_server, 1883);
 client.setCallback(callback);
-Serial.begin(115200);
 /////////////////////////////
 delay(5000);
 //motionControlStart(); // remove when MQTT is active. testing only 
@@ -85,6 +87,13 @@ void loop(){
     reconnect();
     }
     client.loop();
+    if (now < OTAUntilMillis && OTARdyFlag == 0) {
+      wifiSetupOTA();
+      OTARdyFlag = 1;
+    }
+    if (now < OTAUntilMillis && OTARdyFlag == 1) {
+      ArduinoOTA.handle();
+    }
 }
 
 
