@@ -180,7 +180,7 @@ void lockedRotorCheck(){
     if (rpm <= LOCKEDDISCRPM){
 		Serial.println("Locked rotor. attempting restart");
         digitalWrite(STARTRELAYPIN, LOW); // immediately shut down if RPM lowByte
-        client.publish(TOPIC_T, "CritErr: Disc rotation is locked, attempting restart");
+        client.publish(TOPIC_T, "Error: Disc rotation is locked, attempting restart");
 		delay(STOPTIME);
 		motionControlStart();
 		}                            	
