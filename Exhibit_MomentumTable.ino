@@ -21,7 +21,7 @@
 #define LOCKEDDISCRPM       30      //RPM to consider as "disc stopped"
 #define ROTATIONVARIANCE    6	      //Variance in RPM before alarm condition 
 //#define TRANSMISSIONRATIO   10      //Tranmission drive ratio n:1
-#define NUMBEROFRESTARTS    3      //#of restarts attempted after stopped state
+#define NUMBEROFRESTARTS    30      //#of restarts attempted after stopped state
 #define STARTTIME           10000   //Expected ramp up time, in MS
 #define STOPTIME            10000   //Expected ramp down time, in MS
  /////////
