@@ -3,6 +3,7 @@
    control from AutomationDirect. Control exists through contact
    closure only at this time.
 */
+
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ArduinoOTA.h>
