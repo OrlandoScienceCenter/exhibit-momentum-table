@@ -20,9 +20,11 @@ void callback(char* topic, byte* payload, unsigned int length) {
   // powerOff
   if (payloadStr.equals(F("powerOff"))) {
     motionControlStop();
+  
   // powerOn
   } else if (payloadStr.equals(F("powerOn"))) {
     motionControlStart();
+    
   // getStatus
   } else if (payloadStr.equals(F("getStatus"))) {
       // snprintf (msg, 20, "PowerState: %i", curState);
@@ -46,7 +48,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
   // powerReset
   } else if (payloadStr.equals(F("powerReset"))) {
     motionControlStop();
-    delay(10000);
+    delay(25000);
+    allStopVar = 0;
     motionControlStart();
     loop();
   
