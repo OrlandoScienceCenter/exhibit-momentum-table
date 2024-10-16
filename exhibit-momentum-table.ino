@@ -4,13 +4,6 @@
    closure only at this time.
 */
 
-#include <ESP8266WiFi.h>
-#include <WiFiClient.h>
-#include <ArduinoOTA.h>
-#include <PubSubClient.h>
-#include <ESP8266mDNS.h> // added this to fix a weird arduino ide bug
-#include "Secrets.h"
-
 //////
 #define DESIREDRPM_TABLE    60             //desired RPM on output wheel
 #define DISCSLIPCOUNT       150            //How long alarm cond before alarm signal
@@ -25,8 +18,6 @@
 #define HALLSENSORPIN       4              //hall sensor to detect rotaion
 #define SECONDS             1000           //ms in seconds 
 
-WiFiClient espClient;
-PubSubClient client(espClient);
 
 /**************************************/
 /*            GLOBAL VARS              /
@@ -51,18 +42,20 @@ char msg[50];
 /*               SETUP                 /
   /**************************************/
 void setup() {
+  Serial.begin(115200);
+
   pinMode(STARTRELAYPIN, OUTPUT);
   pinMode(HALLSENSORPIN, INPUT_PULLUP);
   digitalWrite(STARTRELAYPIN, LOW);
   attachInterrupt(digitalPinToInterrupt(HALLSENSORPIN), sensorPulseCount, FALLING);
-  Serial.begin(115200);
-  wifiSetup();
-  client.setServer(mqtt_server, 1883);
-  client.setCallback(callback);
+  
+  //wifiSetup();
+  //client.setServer(mqtt_server, 1883);
+  //client.setCallback(callback);
   /////////////////////////////
   delay(5000);
   motionControlStart(); // Start the disc when plugged in
-  /////////////////////////////
+  ///////////////////////////// 
 }
 
 
@@ -70,31 +63,22 @@ void setup() {
 /*                LOOP                 /
   /**************************************/
 void loop() {
+
+  Serial.println(pulseCount);
+
   if  (allStopVar == 0) {
     calculateRPM();
     discSlipCheck();
     lockedRotorCheck();
   }
-  now = millis();
-  //MQTT Connection Check
-  if (!client.connected()) {
-    reconnect();
-  }
-  client.loop();
-  if (now < OTAUntilMillis && OTARdyFlag == 0) {
-    wifiSetupOTA();
-    OTARdyFlag = 1;
-  }
-  if (now < OTAUntilMillis && OTARdyFlag == 1) {
-    ArduinoOTA.handle();
-  }
+  
 }
 
 
 /**************************************/
 /*             FUNCTIONS               /
   /**************************************/
-void sensorPulseCount() {
+ICACHE_RAM_ATTR void sensorPulseCount() {
   pulseCount++;
   // expected two pulse counts per rotation, two sensors
 }
@@ -137,11 +121,11 @@ void motionControlStart() {
   if (restartCount >= NUMBEROFRESTARTS) {
     digitalWrite(STARTRELAYPIN, LOW);
     Serial.println("disc not started");
-    client.publish(TOPIC_T, "CritErr: Disc Start / Restart Failed --- SYSTEM HALTED");
+    
     //MQTT "Disc Start / Restart Failed ---- SYSTEM HALTED"
     allStop();
-  }
-}
+  } 
+} 
 
 void motionControlStop() {
   digitalWrite(STARTRELAYPIN, LOW);//disable start relay
@@ -149,7 +133,6 @@ void motionControlStop() {
   calculateRPM();
   Serial.println("MotionControlStop");
   if (rpm > 0) {
-    client.publish(TOPIC_T, "Error: Disc not stopped even though commanded, System halting");
     allStop();
   }
 }
@@ -163,7 +146,6 @@ void discSlipCheck() {
   }
   if (discSlipPrecond > DISCSLIPCOUNT) {
     Serial.println("Continious disc slip detected");
-    client.publish(TOPIC_T, "Error: - Continuious Disc Slip Detected");
     discSlipPrecond = 0;
   }
 }
@@ -173,7 +155,6 @@ void lockedRotorCheck() {
   if (rpm <= LOCKEDDISCRPM) {
     Serial.println("Locked rotor. attempting restart");
     digitalWrite(STARTRELAYPIN, LOW); // immediately shut down if RPM lowByte
-    client.publish(TOPIC_T, "Error: Disc rotation is locked, attempting restart");
     delay(STOPTIME);
     motionControlStart();
   }
@@ -183,12 +164,11 @@ void allStop() {
   digitalWrite(STARTRELAYPIN, LOW);
   Serial.println("System in All-Stop");
   //delay(10000);
-  client.publish(TOPIC_T, "CritErr: System halted. All stop active. Restart Required");
   allStopVar = 1;
 }
 
 void exhibitStatusMsg() {
   char gs_msg [50];
   snprintf (gs_msg, 38, "Disc RPM %i", now / rpm);
-  client.publish(TOPIC_T, gs_msg);
+  Serial.println(gs_msg);
 }
